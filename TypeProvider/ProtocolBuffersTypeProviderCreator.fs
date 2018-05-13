@@ -15,17 +15,17 @@ open Froto.Parser.ClassModel
 
 [<TypeProvider>]
 type ProtocolBuffersTypeProviderCreator(config : TypeProviderConfig) as this= 
-    inherit TypeProviderForNamespaces()
+    inherit TypeProviderForNamespaces(config)
     
     let ns = typeof<ProtocolBuffersTypeProviderCreator>.Namespace
     let asm = Assembly.LoadFrom config.RuntimeAssembly
-    let tempAssembly = Path.ChangeExtension(Path.GetTempFileName(), ".dll") |> ProvidedAssembly
+    let tempAssembly = ProvidedAssembly()
     
     let protobufProvider = 
         ProvidedTypeDefinition(
             asm, ns, "ProtocolBuffersTypeProvider", Some typeof<obj>, 
-            IsErased = false, 
-            HideObjectMethods = true)
+            isErased = false, 
+            hideObjectMethods = true)
 
     let cache = new MemoryCache("TypeProviderCache")
     let disposables = ResizeArray<_>()
@@ -35,8 +35,8 @@ type ProtocolBuffersTypeProviderCreator(config : TypeProviderConfig) as this=
         let provider = 
             ProvidedTypeDefinition(
                 asm, ns, typeName, Some typeof<obj>, 
-                HideObjectMethods = true, 
-                IsErased = false)
+                hideObjectMethods = true, 
+                isErased = false)
                     
         let tempAssembly = Provided.assembly()
             

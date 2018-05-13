@@ -50,7 +50,7 @@ let private createSerializeMethod typeInfo =
             "Serialize",
             [ ProvidedParameter("buffer", typeof<ZeroCopyBuffer>) ],
             typeof<Void>,
-            InvokeCode = (fun args -> Serialization.serializeExpr typeInfo args.[1] args.[0]))
+            invokeCode = (fun args -> Serialization.serializeExpr typeInfo args.[1] args.[0]))
 
     serialize.SetMethodAttrs(MethodAttributes.Virtual ||| MethodAttributes.Public)
 
@@ -62,7 +62,7 @@ let private createReadFromMethod typeInfo =
             "LoadFrom",
             [ProvidedParameter("buffer", typeof<ZeroCopyBuffer>)],
             typeof<Void>,
-            InvokeCode = (fun args -> Deserialization.readFrom typeInfo args.[0] args.[1]))
+            invokeCode = (fun args -> Deserialization.readFrom typeInfo args.[0] args.[1]))
 
     readFrom.SetMethodAttrs(MethodAttributes.Virtual)
 
@@ -74,7 +74,7 @@ let private createDeserializeMethod targetType =
             "Deserialize", 
             [ProvidedParameter("buffer", typeof<ZeroCopyBuffer>)], 
             targetType,
-            InvokeCode = 
+            invokeCode = 
                 (fun args -> Expr.callStaticGeneric [targetType] [args.[0]] <@@ Codec.deserialize<Dummy> x @@>))
             
     deserializeMethod.SetMethodAttrs(MethodAttributes.Static ||| MethodAttributes.Public)
@@ -136,7 +136,7 @@ let private createConstructor (typeDescriptor: TypeDescriptor) =
     // constructor should set default values to fields: repeated fields should be initialized with empty collections
     // and required string fiels - with ""
 
-    ProvidedConstructor([], InvokeCode = fun args ->
+    ProvidedConstructor([], invokeCode = fun args ->
         let this = args.[0]
 
         let initializeRepeatedFields =
@@ -221,13 +221,13 @@ let createNamespaceContainer (package: string) =
         match names with
         | [] -> current
         | x::xs -> 
-            let nested = ProvidedTypeDefinition(Naming.snakeToPascal x, Some typeof<obj>, IsErased = false)
+            let nested = ProvidedTypeDefinition(Naming.snakeToPascal x, Some typeof<obj>, isErased = false)
             current.AddMember nested
             loop xs nested
             
     match package.Split('.') |> List.ofArray with
     | rootName::rest ->
-        let root = ProvidedTypeDefinition(Naming.snakeToPascal rootName, Some typeof<obj>, IsErased = false)
+        let root = ProvidedTypeDefinition(Naming.snakeToPascal rootName, Some typeof<obj>, isErased = false)
         let deepest = loop rest root
         root, deepest
     | _ -> invalidArg "package" "Package name cannot be empty."

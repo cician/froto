@@ -23,8 +23,11 @@ let generateOneOf scope (typesLookup: TypesLookup) (name: string) (members: POne
     |> Provided.addEnumValues oneofCaseEnum
     
     let caseField = ProvidedField(Naming.snakeToCamel name + "Case", typeof<int>)
-    let caseProperty = ProvidedProperty(Naming.camelToPascal caseField.Name, typeof<int>)
-    caseProperty.GetterCode <- fun args -> Expr.FieldGet(args.[0], caseField)
+    let caseProperty =
+        ProvidedProperty(
+            Naming.camelToPascal caseField.Name,
+            typeof<int>,
+            getterCode = (fun args -> Expr.FieldGet(args.[0], caseField)))
 
     let valueField = ProvidedField(Naming.snakeToCamel name, typeof<obj>)
     let properties = 
@@ -37,24 +40,25 @@ let generateOneOf scope (typesLookup: TypesLookup) (name: string) (members: POne
                     kind, Expr.makeGenericType [actualType] typedefof<option<_>>)
                 |> Option.require (sprintf "Unable to find type %A" ptype) 
                 
-            let property = ProvidedProperty(Naming.snakeToPascal name, propertyType)
-            
-            property.GetterCode <- fun args -> 
-                Expr.IfThenElse(
-                    Expr.equal (Expr.FieldGet(args.[0], caseField)) (Expr.Value(i)),
-                    Expr.Coerce(Expr.FieldGet(args.[0], valueField), propertyType),
-                    Expr.defaultOf propertyType)
-
-            property.SetterCode <- fun args -> 
-                let value = args.[1]
-                let case = 
-                    Expr.IfThenElse(
-                        Expr.equal (Expr.box value) (Expr.Value(null)),
-                        Expr.Value(0),
-                        Expr.Value(i))
-                Expr.Sequential(
-                    Expr.FieldSet(args.[0], valueField, Expr.box value),
-                    Expr.FieldSet(args.[0], caseField, case))
+            let property =
+                ProvidedProperty(
+                    Naming.snakeToPascal name,
+                    propertyType,
+                    getterCode = (fun args -> 
+                        Expr.IfThenElse(
+                            Expr.equal (Expr.FieldGet(args.[0], caseField)) (Expr.Value(i)),
+                            Expr.Coerce(Expr.FieldGet(args.[0], valueField), propertyType),
+                            Expr.defaultOf propertyType)),
+                    setterCode = (fun args -> 
+                        let value = args.[1]
+                        let case = 
+                            Expr.IfThenElse(
+                                Expr.equal (Expr.box value) (Expr.Value(null)),
+                                Expr.Value(0),
+                                Expr.Value(i))
+                        Expr.Sequential(
+                            Expr.FieldSet(args.[0], valueField, Expr.box value),
+                            Expr.FieldSet(args.[0], caseField, case))))
                     
             let propertyInfo =
                 { ProvidedProperty = property
@@ -68,12 +72,16 @@ let generateOneOf scope (typesLookup: TypesLookup) (name: string) (members: POne
 
             i, propertyInfo)
 
-    let clearMethod = ProvidedMethod("Clear" + Naming.snakeToPascal name, [], typeof<Void>)
-    clearMethod.InvokeCode <- fun args -> 
-        Expr.Sequential(
-            Expr.FieldSet(args.[0], caseField, Expr.Value(0)),
-            Expr.FieldSet(args.[0], valueField, Expr.Value(null))
-        )
+    let clearMethod =
+        ProvidedMethod(
+            "Clear" + Naming.snakeToPascal name,
+            [],
+            typeof<Void>,
+            invokeCode = (fun args -> 
+                Expr.Sequential(
+                    Expr.FieldSet(args.[0], caseField, Expr.Value(0)),
+                    Expr.FieldSet(args.[0], valueField, Expr.Value(null))
+                )))
     
     let oneOfGroup = 
         { Properties = properties |> Map.ofSeq;

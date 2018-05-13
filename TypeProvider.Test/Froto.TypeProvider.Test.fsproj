@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net461</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
@@ -14,7 +14,7 @@
     <When Condition="$(Configuration) == 'Debug'">
       <ItemGroup>
         <Reference Include="Froto.TypeProvider">
-          <HintPath>..\TypeProvider\bin\Debug\net461\Froto.TypeProvider.dll</HintPath>
+          <HintPath>..\TypeProvider\bin\Debug\netstandard2.0\Froto.TypeProvider.dll</HintPath>
         </Reference>
         <Reference Include="Froto.Serialization">
           <HintPath>..\Serialization\bin\Debug\netstandard2.0\Froto.Serialization.dll</HintPath>
@@ -24,7 +24,7 @@
     <When Condition="$(Configuration) == 'Release'">
       <ItemGroup>
         <Reference Include="Froto.TypeProvider">
-          <HintPath>..\TypeProvider\bin\Release\net461\Froto.TypeProvider.dll</HintPath>
+          <HintPath>..\TypeProvider\bin\Release\netstandard2.0\Froto.TypeProvider.dll</HintPath>
         </Reference>
         <Reference Include="Froto.Serialization">
           <HintPath>..\Serialization\bin\Release\netstandard2.0\Froto.Serialization.dll</HintPath>
